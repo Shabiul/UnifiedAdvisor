@@ -1,25 +1,24 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, ScrollView, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, TextInput, ScrollView, TouchableOpacity, Alert, KeyboardAvoidingView, Platform } from 'react-native';
 import { styled } from 'nativewind';
-import { useUserStore } from '../store/userStore';
-import { EmploymentType, RiskProfile } from '../types';
+import { useUserContext } from '../context/UserContext';
+import { NeoButton } from '../components/NeoButton';
 import { useNavigation } from '@react-navigation/native';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 const StyledView = styled(View);
 const StyledText = styled(Text);
 const StyledInput = styled(TextInput);
-const StyledTouchableOpacity = styled(TouchableOpacity);
 
 export default function OnboardingScreen() {
-    const navigation = useNavigation();
-    const { setProfile, setFinancials, completeOnboarding } = useUserStore();
+    const { setProfile, setFinancials, completeOnboarding } = useUserContext();
 
     const [step, setStep] = useState(1);
     const [name, setName] = useState('');
     const [age, setAge] = useState('');
     const [city, setCity] = useState('');
     const [monthlyIncome, setMonthlyIncome] = useState('');
-    const [monthlyExpense, setMonthlyExpense] = useState(''); // Aggregate for now
+    const [monthlyExpense, setMonthlyExpense] = useState('');
 
     const handleNext = () => {
         if (step === 1) {
@@ -37,96 +36,75 @@ export default function OnboardingScreen() {
             setFinancials({
                 monthly_income: parseFloat(monthlyIncome),
                 expenses: {
-                    fixed: parseFloat(monthlyExpense) * 0.6, // Assumption
+                    fixed: parseFloat(monthlyExpense) * 0.6,
                     variable: parseFloat(monthlyExpense) * 0.4,
                     breakdown: { food: 0, rent: 0, travel: 0, shopping: 0, utilities: 0, others: 0 }
                 }
             });
             completeOnboarding();
-            // Navigation to Dashboard will happen via AppNavigator checking 'isOnboarded' or explicit navigate
-            // navigation.replace('Dashboard'); // But let's rely on state change for root nav
         }
     };
 
     return (
-        <StyledView className="flex-1 bg-slate-900 p-6 pt-12">
-            <StyledText className="text-3xl font-bold text-white mb-2">
-                {step === 1 ? 'Personal Profile' : 'Financial Basics'}
-            </StyledText>
-            <StyledText className="text-slate-400 mb-8">
-                {step === 1 ? 'Tell us a bit about yourself.' : 'Lets understand your money flow.'}
-            </StyledText>
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} className="flex-1 bg-primary">
+            <StyledView className="flex-1 p-6 pt-12 justify-center">
+                <View className="mb-8">
+                    <View className="w-12 h-12 rounded-full bg-neo-card items-center justify-center border border-neo-card_border mb-4">
+                        <MaterialCommunityIcons name={step === 1 ? "account" : "finance"} size={24} color="#39ff14" />
+                    </View>
+                    <StyledText className="text-3xl font-bold text-neo-text mb-2 uppercase tracking-wide">
+                        {step === 1 ? 'Personal Profile' : 'Financial Basics'}
+                    </StyledText>
+                    <StyledText className="text-neo-subtext">
+                        {step === 1 ? 'Tell us a bit about yourself.' : 'Lets understand your money flow.'}
+                    </StyledText>
+                </View>
 
-            <ScrollView className="flex-1">
-                {step === 1 && (
-                    <>
-                        <InputLabel label="Name" />
-                        <StyledInput
-                            className="bg-slate-800 text-white p-4 rounded-xl mb-4 border border-slate-700"
-                            placeholder="e.g. Rahul Kumar"
-                            placeholderTextColor="#64748b"
-                            value={name}
-                            onChangeText={setName}
-                        />
+                <ScrollView showsVerticalScrollIndicator={false}>
+                    {step === 1 && (
+                        <>
+                            <InputLabel label="Name" />
+                            <NeoInput value={name} onChangeText={setName} placeholder="e.g. Rahul Kumar" />
 
-                        <InputLabel label="Age" />
-                        <StyledInput
-                            className="bg-slate-800 text-white p-4 rounded-xl mb-4 border border-slate-700"
-                            placeholder="e.g. 28"
-                            placeholderTextColor="#64748b"
-                            keyboardType="numeric"
-                            value={age}
-                            onChangeText={setAge}
-                        />
+                            <InputLabel label="Age" />
+                            <NeoInput value={age} onChangeText={setAge} placeholder="e.g. 28" keyboardType="numeric" />
 
-                        <InputLabel label="City" />
-                        <StyledInput
-                            className="bg-slate-800 text-white p-4 rounded-xl mb-4 border border-slate-700"
-                            placeholder="e.g. Bangalore"
-                            placeholderTextColor="#64748b"
-                            value={city}
-                            onChangeText={setCity}
-                        />
-                    </>
-                )}
+                            <InputLabel label="City" />
+                            <NeoInput value={city} onChangeText={setCity} placeholder="e.g. Bangalore" />
+                        </>
+                    )}
 
-                {step === 2 && (
-                    <>
-                        <InputLabel label="Monthly Income (₹)" />
-                        <StyledInput
-                            className="bg-slate-800 text-white p-4 rounded-xl mb-4 border border-slate-700"
-                            placeholder="e.g. 80000"
-                            placeholderTextColor="#64748b"
-                            keyboardType="numeric"
-                            value={monthlyIncome}
-                            onChangeText={setMonthlyIncome}
-                        />
+                    {step === 2 && (
+                        <>
+                            <InputLabel label="Monthly Income (₹)" />
+                            <NeoInput value={monthlyIncome} onChangeText={setMonthlyIncome} placeholder="e.g. 150000" keyboardType="numeric" />
 
-                        <InputLabel label="Monthly Expenses (Approx ₹)" />
-                        <StyledInput
-                            className="bg-slate-800 text-white p-4 rounded-xl mb-4 border border-slate-700"
-                            placeholder="e.g. 35000"
-                            placeholderTextColor="#64748b"
-                            keyboardType="numeric"
-                            value={monthlyExpense}
-                            onChangeText={setMonthlyExpense}
-                        />
-                    </>
-                )}
-            </ScrollView>
+                            <InputLabel label="Monthly Expenses (Approx ₹)" />
+                            <NeoInput value={monthlyExpense} onChangeText={setMonthlyExpense} placeholder="e.g. 45000" keyboardType="numeric" />
+                        </>
+                    )}
+                </ScrollView>
 
-            <StyledTouchableOpacity
-                className="bg-blue-600 p-4 rounded-xl items-center mt-4"
-                onPress={handleNext}
-            >
-                <StyledText className="text-white font-bold text-lg">
-                    {step === 1 ? 'Next' : 'Complete Setup'}
-                </StyledText>
-            </StyledTouchableOpacity>
-        </StyledView>
+                <NeoButton
+                    title={step === 1 ? 'Next' : 'Complete Setup'}
+                    onPress={handleNext}
+                    className="mt-6 bg-neo-brand"
+                />
+            </StyledView>
+        </KeyboardAvoidingView>
     );
 }
 
 function InputLabel({ label }: { label: string }) {
-    return <StyledText className="text-slate-300 mb-2 font-medium">{label}</StyledText>;
+    return <StyledText className="text-neo-subtext mb-2 font-bold text-xs uppercase tracking-widest">{label}</StyledText>;
+}
+
+function NeoInput(props: any) {
+    return (
+        <StyledInput
+            className="bg-neo-bg text-white p-4 rounded-xl mb-6 border border-neo-card_border text-lg font-medium"
+            placeholderTextColor="#666"
+            {...props}
+        />
+    );
 }

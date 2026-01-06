@@ -1,8 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator } from 'react-native';
 import { styled } from 'nativewind';
-import { useUserStore } from '../store/userStore';
+import { useUserContext } from '../context/UserContext';
 import { generateAIResponse } from '../services/aiService';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { NeoCard } from '../components/NeoCard';
 
 const StyledView = styled(View);
 const StyledText = styled(Text);
@@ -17,7 +19,7 @@ interface Message {
 }
 
 export default function ChatScreen() {
-    const { profile, financials } = useUserStore();
+    const { profile, financials } = useUserContext();
     const [input, setInput] = useState('');
     const [messages, setMessages] = useState<Message[]>([
         {
@@ -69,54 +71,69 @@ export default function ChatScreen() {
     return (
         <KeyboardAvoidingView
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-            className="flex-1 bg-slate-950"
+            className="flex-1 bg-primary"
         >
-            <StyledView className="flex-1 p-4 pt-12">
-                <View className="flex-row justify-between items-center mb-4 border-b border-slate-800 pb-4">
-                    <View>
-                        <StyledText className="text-white text-xl font-bold">AI Advisor</StyledText>
-                        <StyledText className="text-emerald-400 text-xs font-medium">● Online</StyledText>
+            <StyledView className="flex-1 p-5 pt-12">
+                {/* Header */}
+                <View className="flex-row justify-between items-center mb-6 pb-4 border-b border-neo-card_border">
+                    <View className="flex-row items-center">
+                        <StyledView className="w-10 h-10 rounded-full bg-neo-card items-center justify-center mr-3 border border-neo-brand">
+                            <MaterialCommunityIcons name="robot" size={20} color="#39ff14" />
+                        </StyledView>
+                        <View>
+                            <StyledText className="text-neo-text text-lg font-bold">AI Wealth Manager</StyledText>
+                            <StyledText className="text-neo-brand text-xs font-bold uppercase tracking-widest">● Online</StyledText>
+                        </View>
                     </View>
                 </View>
 
+                {/* Messages */}
                 <ScrollView
                     ref={scrollViewRef}
                     className="flex-1 mb-4"
                     contentContainerStyle={{ paddingBottom: 20 }}
+                    showsVerticalScrollIndicator={false}
                 >
                     {messages.map((msg) => (
                         <View
                             key={msg.id}
                             style={{ alignSelf: msg.sender === 'user' ? 'flex-end' : 'flex-start' }}
-                            className={`max-w-[80%] mb-3 p-3 rounded-2xl ${msg.sender === 'user' ? 'bg-blue-600 rounded-tr-none' : 'bg-slate-800 rounded-tl-none'}`}
+                            className={`max-w-[85%] mb-4 p-4 rounded-2xl ${msg.sender === 'user'
+                                    ? 'bg-neo-card border-none rounded-br-none'
+                                    : 'bg-[#1a1a1a] border border-neo-card_border rounded-bl-none'
+                                }`}
                         >
-                            <StyledText className="text-white">{msg.text}</StyledText>
-                            <StyledText className="text-slate-400 text-[10px] mt-1 text-right">
+                            <StyledText className={`text-base leading-5 ${msg.sender === 'user' ? 'text-white' : 'text-neo-subtext'}`}>
+                                {msg.text}
+                            </StyledText>
+                            <StyledText className="text-neo-subtext opacity-50 text-[10px] mt-2 text-right uppercase tracking-wider font-bold">
                                 {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                             </StyledText>
                         </View>
                     ))}
                     {isLoading && (
-                        <View className="self-start bg-slate-800 p-3 rounded-2xl rounded-tl-none mb-3">
-                            <ActivityIndicator size="small" color="#94a3b8" />
+                        <View className="self-start bg-[#1a1a1a] border border-neo-card_border p-4 rounded-2xl rounded-bl-none mb-4">
+                            <ActivityIndicator size="small" color="#39ff14" />
                         </View>
                     )}
                 </ScrollView>
 
-                <View className="flex-row items-center">
+                {/* Input Area */}
+                <View className="flex-row items-center bg-neo-card p-2 rounded-full border border-neo-card_border">
                     <StyledInput
-                        className="flex-1 bg-slate-900 text-white p-4 rounded-full border border-slate-800 mr-2"
-                        placeholder="Ask about goals, tax..."
-                        placeholderTextColor="#64748b"
+                        className="flex-1 text-white px-4 py-2 font-medium"
+                        placeholder="Ask for advice..."
+                        placeholderTextColor="#666"
                         value={input}
                         onChangeText={setInput}
                         onSubmitEditing={handleSend}
                     />
                     <StyledTouchableOpacity
                         onPress={handleSend}
-                        className="bg-blue-600 w-12 h-12 rounded-full items-center justify-center p-3"
+                        disabled={!input.trim()}
+                        className={`w-10 h-10 rounded-full items-center justify-center ${input.trim() ? 'bg-neo-brand' : 'bg-neo-card_border'}`}
                     >
-                        <StyledText className="text-white font-bold text-lg">↑</StyledText>
+                        <MaterialCommunityIcons name="arrow-up" size={24} color={input.trim() ? "#000" : "#666"} />
                     </StyledTouchableOpacity>
                 </View>
             </StyledView>

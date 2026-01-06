@@ -1,8 +1,12 @@
 import React, { useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, TextInput, Alert, Switch } from 'react-native';
 import { styled } from 'nativewind';
-import { useUserStore } from '../store/userStore';
+import { useUserContext } from '../context/UserContext';
 import { Goal } from '../types';
+import { NeoCard } from '../components/NeoCard';
+import { NeoButton } from '../components/NeoButton';
+import { useNavigation } from '@react-navigation/native';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 const StyledView = styled(View);
 const StyledText = styled(Text);
@@ -10,7 +14,8 @@ const StyledInput = styled(TextInput);
 const StyledTouchableOpacity = styled(TouchableOpacity);
 
 export default function GoalScreen() {
-    const { financials, addGoal, removeGoal } = useUserStore();
+    const { financials, addGoal, removeGoal } = useUserContext();
+    const navigation = useNavigation();
     const [name, setName] = useState('');
     const [targetAmount, setTargetAmount] = useState('');
     const [years, setYears] = useState('');
@@ -20,22 +25,15 @@ export default function GoalScreen() {
     const goals = financials.goals;
 
     const calculateSIP = (target: number, years: number) => {
-        // Simple SIP Formula: P = M * [ ( (1 + i)^n - 1 ) / i ] * (1 + i)
-        // Reverse it to find M (Monthly Investment)
-        // Assume 12% annual return for equity
-        const rate = 0.12 / 12; // Monthly rate
+        const rate = 0.12 / 12;
         const months = years * 12;
 
         if (rate === 0) return target / months;
 
-        // Formula for Target Amount = M * ...
-        // M = Target / ( [ ( (1 + i)^n - 1 ) / i ] * (1 + i) )
         const factor = ((Math.pow(1 + rate, months) - 1) / rate) * (1 + rate);
         let monthly = target / factor;
 
         if (inflationAdjusted) {
-            // Rough heuristic: Increase target by 6% inflation
-            // FV = PV * (1+r)^n
             const realTarget = target * Math.pow(1.06, years);
             monthly = realTarget / factor;
         }
@@ -55,7 +53,7 @@ export default function GoalScreen() {
             target_amount: parseFloat(targetAmount),
             time_horizon_years: parseFloat(years),
             priority,
-            current_amount: 0
+            saved_amount: 0
         };
 
         addGoal(newGoal);
@@ -65,27 +63,32 @@ export default function GoalScreen() {
     };
 
     return (
-        <StyledView className="flex-1 bg-slate-950 p-6 pt-12">
-            <StyledText className="text-white text-2xl font-bold mb-6">Financial Goals</StyledText>
+        <StyledView className="flex-1 bg-primary pt-12">
+            <View className="flex-row items-center mb-6 px-6">
+                <StyledTouchableOpacity onPress={() => navigation.goBack()} className="mr-4 w-10 h-10 rounded-full bg-neo-card items-center justify-center border border-neo-card_border">
+                    <MaterialCommunityIcons name="arrow-left" size={24} color="#fff" />
+                </StyledTouchableOpacity>
+                <StyledText className="text-neo-text text-xl font-bold uppercase tracking-widest">Financial Goals</StyledText>
+            </View>
 
-            <ScrollView>
-                <StyledView className="bg-slate-900 p-4 rounded-2xl mb-6 border border-slate-800">
-                    <StyledText className="text-white font-bold mb-4 text-lg">Add New Goal</StyledText>
+            <ScrollView className="px-5">
+                <NeoCard className="mb-8">
+                    <StyledText className="text-neo-text font-bold mb-4 text-lg uppercase tracking-widest">Add New Goal</StyledText>
 
                     <InputLabel label="Goal Name" />
                     <StyledInput
-                        className="bg-slate-800 text-white p-3 rounded-xl mb-3 border border-slate-700"
-                        placeholder="e.g. Buy Car"
-                        placeholderTextColor="#64748b"
+                        className="bg-neo-bg text-white p-4 rounded-xl mb-4 border border-neo-card_border"
+                        placeholder="e.g. Dream Car"
+                        placeholderTextColor="#666"
                         value={name}
                         onChangeText={setName}
                     />
 
                     <InputLabel label="Target Amount (₹)" />
                     <StyledInput
-                        className="bg-slate-800 text-white p-3 rounded-xl mb-3 border border-slate-700"
-                        placeholder="e.g. 1000000"
-                        placeholderTextColor="#64748b"
+                        className="bg-neo-bg text-white p-4 rounded-xl mb-4 border border-neo-card_border"
+                        placeholder="1,000,000"
+                        placeholderTextColor="#666"
                         keyboardType="numeric"
                         value={targetAmount}
                         onChangeText={setTargetAmount}
@@ -93,52 +96,56 @@ export default function GoalScreen() {
 
                     <InputLabel label="Time Horizon (Years)" />
                     <StyledInput
-                        className="bg-slate-800 text-white p-3 rounded-xl mb-3 border border-slate-700"
-                        placeholder="e.g. 5"
-                        placeholderTextColor="#64748b"
+                        className="bg-neo-bg text-white p-4 rounded-xl mb-4 border border-neo-card_border"
+                        placeholder="5"
+                        placeholderTextColor="#666"
                         keyboardType="numeric"
                         value={years}
                         onChangeText={setYears}
                     />
 
-                    <View className="flex-row items-center justify-between mb-4">
-                        <StyledText className="text-slate-300">Adjust for Inflation (6%)</StyledText>
-                        <Switch value={inflationAdjusted} onValueChange={setInflationAdjusted} trackColor={{ false: "#334155", true: "#2563eb" }} />
+                    <View className="flex-row items-center justify-between mb-4 bg-neo-bg p-3 rounded-xl border border-neo-card_border">
+                        <StyledText className="text-neo-subtext text-xs font-bold uppercase tracking-wider">Inflation Adjusted (6%)</StyledText>
+                        <Switch value={inflationAdjusted} onValueChange={setInflationAdjusted} trackColor={{ false: "#333", true: "#39ff14" }} thumbColor={inflationAdjusted ? "#fff" : "#666"} />
                     </View>
 
                     {years && targetAmount ? (
-                        <StyledView className="bg-slate-800 p-3 rounded-xl mb-4">
-                            <StyledText className="text-slate-400 text-xs">Required Monthly SIP (12% Return)</StyledText>
-                            <StyledText className="text-emerald-400 font-bold text-xl">
-                                ₹{calculateSIP(parseFloat(targetAmount), parseFloat(years))}
+                        <StyledView className="bg-[#1A1A1A] p-4 rounded-xl mb-6 border border-neo-card_border">
+                            <StyledText className="text-neo-subtext text-xs uppercase tracking-widest mb-1">Required Monthly SIP</StyledText>
+                            <StyledText className="text-neo-brand font-bold text-2xl">
+                                ₹{calculateSIP(parseFloat(targetAmount), parseFloat(years)).toLocaleString()}
+                            </StyledText>
+                            <StyledText className="text-neo-subtext text-[10px] mt-1">
+                                Assuming 12% annual returns
                             </StyledText>
                         </StyledView>
                     ) : null}
 
-                    <StyledTouchableOpacity onPress={handleAddGoal} className="bg-blue-600 p-3 rounded-xl items-center">
-                        <StyledText className="text-white font-bold">Add Goal</StyledText>
-                    </StyledTouchableOpacity>
-                </StyledView>
+                    <NeoButton title="Add Goal" onPress={handleAddGoal} className="bg-white" />
+                </NeoCard>
 
-                <StyledText className="text-white text-lg font-bold mb-4">Your Goals</StyledText>
+                <StyledText className="text-neo-subtext text-xs font-bold uppercase mb-4 tracking-widest">Your Goals</StyledText>
                 {goals.map((goal) => (
-                    <StyledView key={goal.id} className="bg-slate-900 p-4 rounded-xl mb-3 border border-slate-800 flex-row justify-between items-center">
+                    <NeoCard key={goal.id} className="flex-row justify-between items-center py-5">
                         <View>
-                            <StyledText className="text-white font-bold text-lg">{goal.name}</StyledText>
-                            <StyledText className="text-slate-400 text-xs">{goal.time_horizon_years} Years • ₹{goal.target_amount}</StyledText>
-                            <StyledText className="text-blue-400 text-xs font-semibold mt-1">SIP: ₹{calculateSIP(goal.target_amount, goal.time_horizon_years)}/mo</StyledText>
+                            <StyledText className="text-neo-text font-bold text-lg mb-1">{goal.name}</StyledText>
+                            <StyledText className="text-neo-subtext text-xs font-medium">{goal.time_horizon_years} Years • ₹{goal.target_amount.toLocaleString()}</StyledText>
+                            <StyledText className="text-neo-brand text-xs font-bold mt-2 uppercase tracking-wide">
+                                SIP: ₹{calculateSIP(goal.target_amount, goal.time_horizon_years || 0).toLocaleString()}/mo
+                            </StyledText>
                         </View>
-                        <StyledTouchableOpacity onPress={() => removeGoal(goal.id)} className="bg-red-900 p-2 rounded-lg">
-                            <StyledText className="text-red-200 text-xs">Del</StyledText>
+                        <StyledTouchableOpacity onPress={() => removeGoal(goal.id)} className="bg-neo-danger w-8 h-8 rounded-full items-center justify-center">
+                            <MaterialCommunityIcons name="trash-can-outline" size={16} color="white" />
                         </StyledTouchableOpacity>
-                    </StyledView>
+                    </NeoCard>
                 ))}
 
+                <View className="h-10" />
             </ScrollView>
         </StyledView>
     );
 }
 
 function InputLabel({ label }: { label: string }) {
-    return <StyledText className="text-slate-300 mb-1 font-medium text-xs">{label}</StyledText>;
+    return <StyledText className="text-neo-subtext mb-2 font-bold text-xs uppercase tracking-widest">{label}</StyledText>;
 }

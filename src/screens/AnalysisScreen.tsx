@@ -2,7 +2,8 @@ import React from 'react';
 import { View, Text, ScrollView, Dimensions } from 'react-native';
 import { styled } from 'nativewind';
 import { PieChart } from 'react-native-chart-kit';
-import { useUserStore } from '../store/userStore';
+import { useUserContext } from '../context/UserContext';
+import { NeoCard } from '../components/NeoCard';
 
 const StyledView = styled(View);
 const StyledText = styled(Text);
@@ -10,16 +11,16 @@ const StyledText = styled(Text);
 const screenWidth = Dimensions.get('window').width;
 
 const chartConfig = {
-    backgroundGradientFrom: "#1e293b",
-    backgroundGradientTo: "#0f172a",
+    backgroundGradientFrom: "#121212",
+    backgroundGradientTo: "#121212",
     color: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
-    strokeWidth: 2, // optional, default 3
+    strokeWidth: 2,
     barPercentage: 0.5,
-    useShadowColorFromDataset: false // optional
 };
 
 export default function AnalysisScreen() {
-    const breakdown = useUserStore((state) => state.financials.expenses.breakdown);
+    const { financials } = useUserContext();
+    const breakdown = financials.expenses.breakdown;
 
     const data = Object.keys(breakdown).map((key) => {
         const amount = breakdown[key as keyof typeof breakdown];
@@ -27,45 +28,53 @@ export default function AnalysisScreen() {
             name: key.charAt(0).toUpperCase() + key.slice(1),
             population: amount,
             color: getColor(key),
-            legendFontColor: "#cbd5e1",
+            legendFontColor: "#86868b",
             legendFontSize: 12
         };
     }).filter(item => item.population > 0);
 
     return (
-        <StyledView className="flex-1 bg-slate-950 p-6 pt-12">
-            <StyledText className="text-white text-2xl font-bold mb-6">Expense Analysis</StyledText>
+        <StyledView className="flex-1 bg-primary pt-12">
+            <StyledText className="text-neo-text text-2xl font-bold mb-6 px-5 uppercase tracking-widest">
+                Expense Analysis
+            </StyledText>
 
-            {data.length > 0 ? (
-                <View className="items-center bg-slate-900 rounded-3xl p-4 mb-6">
-                    <PieChart
-                        data={data}
-                        width={screenWidth - 60}
-                        height={220}
-                        chartConfig={chartConfig}
-                        accessor={"population"}
-                        backgroundColor={"transparent"}
-                        paddingLeft={"15"}
-                        center={[10, 0]}
-                        absolute
-                    />
-                </View>
-            ) : (
-                <StyledView className="items-center justify-center p-10 bg-slate-900 rounded-3xl mb-6">
-                    <StyledText className="text-slate-400">No expenses recorded yet.</StyledText>
-                </StyledView>
-            )}
+            <ScrollView className="px-5">
+                {data.length > 0 ? (
+                    <NeoCard className="items-center mb-6 pt-2 pb-6">
+                        <PieChart
+                            data={data}
+                            width={screenWidth - 70}
+                            height={220}
+                            chartConfig={chartConfig}
+                            accessor={"population"}
+                            backgroundColor={"transparent"}
+                            paddingLeft={"0"}
+                            center={[5, 0]}
+                            absolute
+                            hasLegend={true}
+                        />
+                    </NeoCard>
+                ) : (
+                    <NeoCard className="items-center justify-center p-10 mb-6">
+                        <StyledText className="text-neo-subtext font-bold">NO DATA AVAILABLE</StyledText>
+                    </NeoCard>
+                )}
 
-            <StyledText className="text-white text-lg font-bold mb-4">Breakdown</StyledText>
-            <ScrollView>
+                <StyledText className="text-neo-subtext text-xs font-bold uppercase mb-4 tracking-widest">
+                    Detailed Breakdown
+                </StyledText>
+
                 {data.map((item, index) => (
-                    <View key={index} className="flex-row justify-between items-center bg-slate-900 p-4 rounded-xl mb-3 border border-slate-800">
+                    <NeoCard key={index} className="flex-row justify-between items-center py-4 mb-3 border-b border-neo-card_border bg-[#1A1A1A] rounded-none border-t-0 border-l-0 border-r-0">
                         <View className="flex-row items-center">
-                            <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: item.color, marginRight: 10 }} />
-                            <StyledText className="text-white font-medium">{item.name}</StyledText>
+                            <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: item.color, marginRight: 12 }} />
+                            <StyledText className="text-neo-text font-bold text-base">{item.name}</StyledText>
                         </View>
-                        <StyledText className="text-white font-bold">₹{item.population}</StyledText>
-                    </View>
+                        <StyledText className="text-neo-text font-bold text-lg">
+                            ₹{item.population.toLocaleString('en-IN')}
+                        </StyledText>
+                    </NeoCard>
                 ))}
             </ScrollView>
         </StyledView>
@@ -74,12 +83,12 @@ export default function AnalysisScreen() {
 
 function getColor(category: string) {
     const colors: Record<string, string> = {
-        food: '#f87171', // red-400
-        rent: '#60a5fa', // blue-400
-        travel: '#fbbf24', // amber-400
-        shopping: '#c084fc', // purple-400
-        utilities: '#4ade80', // green-400
-        others: '#94a3b8' // slate-400
+        food: '#FF3B30',
+        rent: '#3B82F6',
+        travel: '#FFD60A',
+        shopping: '#BF5AF2',
+        utilities: '#32D74B',
+        others: '#8E8E93'
     };
-    return colors[category] || '#94a3b8';
+    return colors[category] || '#8E8E93';
 }

@@ -3,7 +3,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import OnboardingScreen from './src/screens/OnboardingScreen';
 import DashboardScreen from './src/screens/DashboardScreen';
-import { useUserStore } from './src/store/userStore';
+import { UserProvider, useUserContext } from './src/context/UserContext';
 import { View, Text } from 'react-native';
 
 import AddExpenseScreen from './src/screens/AddExpenseScreen';
@@ -15,15 +15,15 @@ import ChatScreen from './src/screens/ChatScreen';
 const Stack = createNativeStackNavigator();
 
 export default function App() {
-  // Hydration check for Zustand persist
-  const [isHydrated, setIsHydrated] = useState(false);
-  const isOnboarded = useUserStore((state) => state.isOnboarded);
+  return (
+    <UserProvider>
+      <MainApp />
+    </UserProvider>
+  );
+}
 
-  useEffect(() => {
-    setIsHydrated(true);
-  }, []);
-
-  if (!isHydrated) return <View className="flex-1 bg-slate-950 items-center justify-center"><Text className="text-white">Loading...</Text></View>;
+function MainApp() {
+  const { isOnboarded } = useUserContext();
 
   return (
     <NavigationContainer>

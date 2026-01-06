@@ -1,5 +1,5 @@
 export type EmploymentType = 'salaried' | 'freelancer' | 'business' | 'student';
-export type RiskProfile = 'low' | 'medium' | 'high';
+export type RiskProfile = 'low' | 'medium' | 'high' | 'aggressive';
 
 export interface ExpenseBreakdown {
     food: number;
@@ -8,6 +8,7 @@ export interface ExpenseBreakdown {
     shopping: number;
     utilities: number;
     others: number;
+    [key: string]: number; // Allow flexible categories
 }
 
 export interface Expenses {
@@ -35,17 +36,18 @@ export interface Goal {
     id: string;
     name: string;
     target_amount: number;
-    time_horizon_years: number;
+    saved_amount?: number;
+    deadline?: string;
+    time_horizon_years?: number;
     priority: 'low' | 'medium' | 'high';
-    current_amount?: number;
 }
 
 export interface Transaction {
     id: string;
     amount: number;
-    category: keyof ExpenseBreakdown;
+    category: string; // Changed from strict keyof to string to allow 'salary' etc
     date: string;
-    note?: string;
+    description?: string;
     type: 'expense' | 'income';
 }
 
@@ -70,10 +72,11 @@ export interface FinancialData {
 }
 
 export interface Budget {
-    category: keyof ExpenseBreakdown | 'total';
+    id: string;
+    category: string;
     limit: number;
-    period: 'monthly';
-    spent: number; // To track spending against this budget
+    period: 'monthly' | 'weekly' | 'yearly';
+    spent: number;
 }
 
 export interface UserState {
@@ -82,7 +85,7 @@ export interface UserState {
     isOnboarded: boolean;
     setProfile: (profile: Partial<UserProfile>) => void;
     setFinancials: (data: Partial<FinancialData>) => void;
-    updateExpenseBreakdown: (category: keyof ExpenseBreakdown, amount: number) => void;
+    updateExpenseBreakdown: (category: string, amount: number) => void;
     addGoal: (goal: Goal) => void;
     removeGoal: (id: string) => void;
     addTransaction: (transaction: Transaction) => void;
